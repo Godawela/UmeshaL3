@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const deviceRoutes = require('./routes/deviceRoutes'); // Correct path
+const symptomRoutes = require('./routes/symptomRoutes'); // Correct path
+
 const port = process.env.PORT || "8000";
 
 const app = express();
@@ -21,8 +23,9 @@ mongoose.Promise = global.Promise;
 
 // Use the routes
 app.use('/api', deviceRoutes);
+app.use('/api', symptomRoutes);
 
-app.get('/', (req, res) => {
+app.get('/', (res) => {
     res.send('Hello from Express!!');
     console.log('Hi Express!!');
 });
