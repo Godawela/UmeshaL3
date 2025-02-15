@@ -27,7 +27,6 @@ app.use('/api', symptomRoutes);
 
 app.get('/', (res) => {
     res.send('Hello from Express!!');
-    console.log('Hi Express!!');
 });
 
 app.listen(port, () => {

@@ -16,6 +16,11 @@ const getDeviceById = async (id) => {
     return await Device.findById(id);
 };
 
+// Function to get a device by category
+const getDeviceByCategory = async (category) => {
+    return await Device.find({ category });
+};
+
 // Function to update a device by ID
 const updateDevice = async (id, updateData) => {
     return await Device.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
@@ -30,6 +35,7 @@ module.exports = {
     createDevice,
     getDevices,
     getDeviceById,
+    getDeviceByCategory,
     updateDevice,
     deleteDevice
 };

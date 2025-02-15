@@ -32,6 +32,17 @@ exports.getDeviceById = async (req, res) => {
     }
 };
 
+// Get by category
+exports.getDeviceByCategory = async (req, res) => {
+    try {
+        const devices = await Device.find({ category: req.params.category });
+        if (!devices) return res.status(404).json({ error: 'Devices not found' });
+        res.status(200).json(devices);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Update a device by ID
 exports.updateDevice = async (req, res) => {
     const updates = Object.keys(req.body);
