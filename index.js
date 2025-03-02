@@ -12,7 +12,7 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-const dbURI = process.env.DB_URI || "mongodb+srv://udayanga:udayanga@udayanga.yebyk.mongodb.net/";
+const dbURI = process.env.DB_URI;
 
 mongoose
     .connect(dbURI)

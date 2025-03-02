@@ -32,6 +32,18 @@ exports.getDeviceById = async (req, res) => {
     }
 };
 
+//get device by name
+exports.getDeviceByName = async (req, res) => {
+    try {
+        const device = await Device.find({ name: req.params.name });
+        if (!device) return res.status(404).json({ error: 'Device not found' });
+        res.status(200).json(device);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 // Get by category
 exports.getDeviceByCategory = async (req, res) => {
     try {

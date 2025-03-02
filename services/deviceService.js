@@ -16,6 +16,11 @@ const getDeviceById = async (id) => {
     return await Device.findById(id);
 };
 
+// Function to get a device by name
+const getDeviceByName = async (name) => {
+    return await Device.findByName(name);
+}
+
 // Function to get a device by category
 const getDeviceByCategory = async (category) => {
     return await Device.find({ category });
