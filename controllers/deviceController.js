@@ -88,3 +88,101 @@ exports.deleteDevice = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Get all unique categories
+exports.getAllCategories = async (req, res) => {
+    try {
+        const categories = await Device.distinct('category');
+        res.status(200).json(categories);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Create a new category (by updating a device's category)
+exports.createCategory = async (req, res) => {
+    try {
+        const { deviceId, category } = req.body;
+        
+        if (!deviceId || !category) {
+            return res.status(400).json({ error: 'Device ID and category are required' });
+        }
+        
+        const updatedDevice = await Device.findByIdAndUpdate(
+            deviceId,
+            { category },
+            { new: true }
+        );
+        
+        if (!updatedDevice) {
+            return res.status(404).json({ error: 'Device not found' });
+        }
+        
+        res.status(200).json(updatedDevice);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Update a category (updates all devices in that category)
+exports.updateCategory = async (req, res) => {
+    try {
+        const { oldCategory, newCategory } = req.body;
+        
+        if (!oldCategory || !newCategory) {
+            return res.status(400).json({ error: 'Old category and new category are required' });
+        }
+        
+        const result = await Device.updateMany(
+            { category: oldCategory },
+            { category: newCategory }
+        );
+        
+        res.status(200).json({ 
+            message: `Updated ${result.modifiedCount} devices from category "${oldCategory}" to "${newCategory}"`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Delete a category (removes the category from all devices)
+exports.deleteCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+        
+        if (!category) {
+            return res.status(400).json({ error: 'Category is required' });
+        }
+        
+        const result = await Device.updateMany(
+            { category },
+            { category: 'Uncategorized' } 
+        );
+        
+        res.status(200).json({ 
+            message: `Removed category "${category}" from ${result.modifiedCount} devices`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get all devices in a specific category
+exports.getDevicesByCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+        
+        if (!category) {
+            return res.status(400).json({ error: 'Category is required' });
+        }
+        
+        const devices = await Device.find({ category });
+        
+        res.status(200).json(devices);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
