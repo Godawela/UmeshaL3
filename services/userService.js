@@ -22,9 +22,16 @@ const getUserByUid = async (uid) => {
   return await User.findOne({ uid });
 }
 
+//get user role by uid
+const getUserRoleByUid = async (uid) => {
+  return await User.findOne({ uid }, { role: 1, _id: 0 });
+};
+
+
 module.exports = {
   createUser,
   getAllUsers,
   updateUser,
-  getUserByUid
+  getUserByUid,
+  getUserRoleByUid
 };

@@ -46,9 +46,30 @@ const getUserByUid = async (req, res) => {
   }
 };
 
+// Get user role by UID
+const getUserRoleByUid = async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    const user = await userService.getUserByUid(uid);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Return role in a JSON object
+    res.status(200).json({ role: user.role });
+
+  } catch (err) {
+    console.error('Error fetching user role:', err);
+    res.status(500).json({ error: 'Failed to fetch user role' });
+  }
+};
+
+
 module.exports = {
   createUser,
   getAllUsers,
   updateUser,
-  getUserByUid
+  getUserByUid,
+  getUserRoleByUid
 };
