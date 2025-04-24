@@ -6,6 +6,7 @@ const deviceRoutes = require('./routes/deviceRoutes'); // Correct path
 const symptomRoutes = require('./routes/symptomRoutes'); // Correct path
 const userRoutes = require('./routes/userRoutes'); // Correct path
 const noteRoutes = require('./routes/noteRoutes'); // Correct path
+const categoryRoutes = require('./routes/categoryRoutes'); // Correct path
 
 const port = process.env.PORT || "8000";
 
@@ -28,6 +29,7 @@ app.use('/api', deviceRoutes);
 app.use('/api', symptomRoutes);
 app.use('/api', userRoutes); 
 app.use('/api', noteRoutes); 
+app.use('/api', categoryRoutes);
 
 app.get('/', (res) => {
     res.send('Hello from Express!!');
