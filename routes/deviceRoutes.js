@@ -19,3 +19,4 @@ router.delete('/categories/:category', deviceController.deleteCategory);
 router.get('/category/:category', deviceController.getDevicesByCategory); 
 
 module.exports = router;
+ 
