@@ -1,15 +1,27 @@
 // services/noteService.js
 const Note = require('../models/noteModel');
 
-const getAllNotes = () => Note.find();
+const getAllNotes = async (uid) => {
+  return await Note.find({ userId: uid });
+};
 
-const createNote = (text) => Note.create({ text });
+async function createNote(uid, text) {
+  return await Note.create({ uid, text }); 
+}
 
-const updateNote = (id, text) => Note.findByIdAndUpdate(id, { text }, { new: true });
 
-const deleteNote = (id) => Note.findByIdAndDelete(id);
+async function updateNote(uid, id, text) {
+  return Note.findOneAndUpdate({ _id: id, userId: uid }, { text }, { new: true });
+}
 
-const deleteAllNotes = () => Note.deleteMany();
+async function deleteNote(uid, id) {
+  const result = await Note.deleteOne({ _id: id, userId: uid });
+  return result.deletedCount > 0;
+}
+
+async function deleteAllNotes(uid) {
+  await Note.deleteMany({ userId: uid });
+}
 
 module.exports = {
   getAllNotes,
