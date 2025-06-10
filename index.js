@@ -32,7 +32,7 @@ app.use('/api', symptomRoutes);
 app.use('/api', userRoutes); 
 app.use('/api', noteRoutes); 
 app.use('/api', categoryRoutes);
-app.use('/api/quicktips', quickTipRoutes); // Correct path for quick tips
+app.use('/api/quicktips', quickTipRoutes); 
 
 app.get('/', (res) => {
     res.send('Hello from Express!!');
