@@ -9,7 +9,11 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-   
+    image: {
+        type: String, // Store file path or URL
+        required: false
+    },
+    
 }, { timestamps: true });
 
 const Category = mongoose.model('Category', categorySchema);

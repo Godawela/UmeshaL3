@@ -1,24 +1,32 @@
 const Category = require('../models/categoryModel');
 
-
-
-// Funtion to get category description by name
+// Function to get category description by name
 const getCategoryDescriptionByName = async (name) => {
     return await Category.findOne({ name: name });
 };
 
-// Function to create a new category
-const createCategory = async (name, description) => {
-    const newCategory = new Category({ name, description });
+// Function to create a new category with image
+const createCategory = async (name, description, imagePath = null) => {
+    const categoryData = { name, description };
+    if (imagePath) {
+        categoryData.image = imagePath;
+    }
+    
+    const newCategory = new Category(categoryData);
     await newCategory.save();
     return newCategory;
 };
 
-// Function to update an existing category
-const updateCategory = async (id, name, description) => {
+// Function to update an existing category with image
+const updateCategory = async (id, name, description, imagePath = null) => {
+    const updateData = { name, description };
+    if (imagePath) {
+        updateData.image = imagePath;
+    }
+    
     const updatedCategory = await Category.findByIdAndUpdate(
         id,
-        { name, description },
+        updateData,
         { new: true }
     );
     return updatedCategory;
