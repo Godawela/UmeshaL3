@@ -141,21 +141,28 @@ class QuickTipService {
 
   // Delete a specific tip
   async deleteTip(categoryId, tipId) {
-    try {
-      const quickTip = await QuickTip.findOne({ categoryId });
-      if (!quickTip) {
-        throw new Error('Quick tips not found for this category');
-      }
-
-      quickTip.tips.id(tipId).remove();
-      await quickTip.save();
-      
-      return await QuickTip.findByCategoryId(categoryId);
-    } catch (error) {
-      throw new Error(`Error deleting tip: ${error.message}`);
+  try {
+    console.log('Attempting to delete tip:', { categoryId, tipId }); // Debug log
+    
+    const quickTip = await QuickTip.findOne({ categoryId });
+    if (!quickTip) {
+      throw new Error('Quick tips not found for this category');
     }
-  }
 
+    console.log('Found quickTip document:', quickTip._id); // Debug log
+    console.log('Tips array length before deletion:', quickTip.tips.length); // Debug log
+
+    quickTip.tips.pull({ _id: tipId });
+    await quickTip.save();
+
+    console.log('Tips array length after deletion:', quickTip.tips.length); // Debug log
+    
+    return await QuickTip.findByCategoryId(categoryId);
+  } catch (error) {
+    console.error('Delete tip error:', error); // Debug log
+    throw new Error(`Error deleting tip: ${error.message}`);
+  }
+}
   // Get all quick tips (for admin purposes)
   async getAllQuickTips() {
     try {
