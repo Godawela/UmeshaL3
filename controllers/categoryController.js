@@ -65,10 +65,10 @@ exports.addCategory = async (req, res) => {
 // Update an existing category with image
 exports.updateCategory = async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, removeImage } = req.body;
         const { id } = req.params;
 
-        console.log(`Updating category ${id} with`, { name, description });
+        console.log(`Updating category ${id} with`, { name, description, removeImage });
 
         // Find the existing category
         const existingCategory = await Category.findById(id);
@@ -83,14 +83,29 @@ exports.updateCategory = async (req, res) => {
         // Prepare update data
         const updateData = { name, description };
 
-        // Handle image update
-        if (req.file) {
+        // Handle image operations
+        if (removeImage === 'true') {
+            // Remove the image - delete the file and set image field to null
+            if (existingCategory.image && fs.existsSync(existingCategory.image)) {
+                fs.unlinkSync(existingCategory.image);
+                console.log('Deleted existing image file:', existingCategory.image);
+            }
+            updateData.image = null; // Set image field to null in database
+            
+            // Also delete any newly uploaded file since we're removing the image
+            if (req.file) {
+                fs.unlinkSync(req.file.path);
+            }
+        } else if (req.file) {
+            // Replace with new image
             // Delete old image if it exists
             if (existingCategory.image && fs.existsSync(existingCategory.image)) {
                 fs.unlinkSync(existingCategory.image);
+                console.log('Deleted old image file:', existingCategory.image);
             }
             updateData.image = req.file.path;
         }
+        // If neither removeImage nor req.file, keep existing image unchanged
 
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
@@ -98,6 +113,7 @@ exports.updateCategory = async (req, res) => {
             { new: true, runValidators: true }
         );
 
+        console.log('Category updated successfully:', updatedCategory);
         res.status(200).json(updatedCategory);
     } catch (error) {
         console.error('Update error:', error);
@@ -111,7 +127,6 @@ exports.updateCategory = async (req, res) => {
         });
     }
 };
-
 // Delete a category and its image
 exports.deleteCategory = async (req, res) => {
     try {
