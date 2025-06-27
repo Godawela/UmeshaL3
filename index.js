@@ -1,4 +1,3 @@
-const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -12,9 +11,12 @@ const quickTipRoutes = require('./routes/quickTipRoutes'); // Correct path for q
 
 const port = process.env.PORT || "8000";
 
+const path = require('path');
+const express = require('express');
 const app = express();
 
-app.use(express.urlencoded({ extended: false }));
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const dbURI = process.env.DB_URI;
@@ -32,7 +34,9 @@ app.use('/api', symptomRoutes);
 app.use('/api', userRoutes); 
 app.use('/api', noteRoutes); 
 app.use('/api', categoryRoutes);
-app.use('/api/quicktips', quickTipRoutes); 
+app.use('/api/quicktips', quickTipRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 app.get('/', (res) => {
     res.send('Hello from Express!!');
