@@ -35,7 +35,6 @@ app.use('/api', userRoutes);
 app.use('/api', noteRoutes); 
 app.use('/api', categoryRoutes);
 app.use('/api/quicktips', quickTipRoutes);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 app.get('/', (res) => {

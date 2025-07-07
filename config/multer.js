@@ -1,35 +1,41 @@
-// config/multer.js
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('./cloudinary');
 const path = require('path');
-const fs = require('fs');
 
-// Create uploads directory if it doesn't exist
-const uploadDir = 'uploads/categories';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'category-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary storage
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'categories', // Fixed: Changed from 'category' to 'categories' for consistency
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'svg'],
+        transformation: [
+            {
+                width: 800,
+                height: 600,
+                crop: 'limit',
+                quality: 'auto:good'
+            }
+        ],
+        public_id: (req, file) => {
+            // Generate unique public_id
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            return `category-${uniqueSuffix}`;
+        }
     }
 });
 
-// Improved file filter with debugging and more flexible validation
+// Simplified file filter for better debugging
 const fileFilter = (req, file, cb) => {
+    console.log('=== FILE FILTER DEBUG ===');
     console.log('File details:', {
         originalname: file.originalname,
         mimetype: file.mimetype,
-        size: file.size
+        size: file.size,
+        fieldname: file.fieldname
     });
 
-    // List of allowed image MIME types
+    // List of allowed image MIME types (including mobile-friendly ones)
     const allowedMimeTypes = [
         'image/jpeg',
         'image/jpg', 
@@ -38,7 +44,8 @@ const fileFilter = (req, file, cb) => {
         'image/webp',
         'image/bmp',
         'image/tiff',
-        'image/svg+xml'
+        'image/svg+xml',
+        'application/octet-stream' // Common for mobile uploads
     ];
 
     // List of allowed file extensions
@@ -47,30 +54,56 @@ const fileFilter = (req, file, cb) => {
     // Get file extension
     const fileExtension = path.extname(file.originalname).toLowerCase();
 
-    // Check both MIME type and file extension
-    const isMimeTypeValid = allowedMimeTypes.includes(file.mimetype);
-    const isExtensionValid = allowedExtensions.includes(fileExtension);
-
-    if (isMimeTypeValid || isExtensionValid) {
-        console.log('File accepted:', file.originalname);
-        cb(null, true);
-    } else {
-        console.log('File rejected:', {
-            filename: file.originalname,
-            mimetype: file.mimetype,
-            extension: fileExtension
-        });
-        cb(new Error(`Only image files are allowed! Received: ${file.mimetype} with extension ${fileExtension}`), false);
+    // Check MIME type
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        console.log('✅ File accepted (valid MIME type):', file.originalname);
+        return cb(null, true);
     }
+
+    // If MIME type check fails, check extension as fallback
+    if (allowedExtensions.includes(fileExtension)) {
+        console.log('✅ File accepted (valid extension):', file.originalname);
+        return cb(null, true);
+    }
+
+    // Reject the file
+    console.log('❌ File rejected:', {
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        extension: fileExtension
+    });
+    cb(new Error(`Only image files are allowed! Received: ${file.mimetype} for file: ${file.originalname}`), false);
 };
 
-// Configure multer with error handling
+// Configure multer with Cloudinary storage
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // Increased to 10MB for camera photos
+        fileSize: 10 * 1024 * 1024, // 10MB limit
     }
 });
 
-module.exports = upload;
+// Add error handling middleware
+const handleMulterError = (err, req, res, next) => {
+    console.error('Multer error:', err);
+    
+    if (err instanceof multer.MulterError) {
+        switch (err.code) {
+            case 'LIMIT_FILE_SIZE':
+                return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+            case 'LIMIT_FILE_COUNT':
+                return res.status(400).json({ error: 'Too many files. Only one file is allowed.' });
+            case 'LIMIT_UNEXPECTED_FILE':
+                return res.status(400).json({ error: 'Unexpected file field. Use "image" as the field name.' });
+            default:
+                return res.status(400).json({ error: `File upload error: ${err.message}` });
+        }
+    } else if (err.message.includes('Only image files are allowed')) {
+        return res.status(400).json({ error: err.message });
+    }
+    
+    next(err);
+};
+
+module.exports = { upload, handleMulterError };

@@ -1,6 +1,14 @@
 const Category = require('../models/categoryModel');
-const fs = require('fs');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
+
+// Helper function to extract public_id from Cloudinary URL
+const extractPublicId = (url) => {
+    if (!url) return null;
+    
+    // Extract public_id from Cloudinary URL
+    const matches = url.match(/\/([^\/]+)\.(jpg|jpeg|png|gif|webp|bmp|tiff|svg)$/);
+    return matches ? matches[1] : null;
+};
 
 // Get category description by category name
 exports.getCategoryDescriptionByName = async (req, res) => {
@@ -27,14 +35,39 @@ exports.getCategoryDescriptionByName = async (req, res) => {
 // Add a new category with image
 exports.addCategory = async (req, res) => {
     try {
+        console.log('=== ADD CATEGORY DEBUG ===');
+        console.log('Request body:', req.body);
+        console.log('Request file:', req.file);
+        
         const { name, description } = req.body;
+
+        // Validate required fields
+        if (!name || !description) {
+            console.log('Missing required fields');
+            // Clean up uploaded file if validation fails
+            if (req.file && req.file.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(req.file.public_id);
+                    console.log('Cleaned up uploaded file due to validation error');
+                } catch (cleanupError) {
+                    console.error('Error cleaning up file:', cleanupError);
+                }
+            }
+            return res.status(400).json({ error: 'Name and description are required' });
+        }
 
         // Check if the category already exists
         const existingCategory = await Category.findOne({ name });
         if (existingCategory) {
-            // Delete uploaded file if category exists
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
+            console.log('Category already exists');
+            // Delete uploaded file from Cloudinary if category exists
+            if (req.file && req.file.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(req.file.public_id);
+                    console.log('Cleaned up uploaded file due to existing category');
+                } catch (cleanupError) {
+                    console.error('Error cleaning up file:', cleanupError);
+                }
             }
             return res.status(400).json({ error: 'Category already exists' });
         }
@@ -42,29 +75,56 @@ exports.addCategory = async (req, res) => {
         // Prepare category data
         const categoryData = { name, description };
         
-        // Add image path if file was uploaded
+        // Add image URL if file was uploaded
         if (req.file) {
-            categoryData.image = req.file.path;
+            console.log('File uploaded successfully to Cloudinary:', {
+                url: req.file.path,
+                public_id: req.file.public_id,
+                secure_url: req.file.secure_url
+            });
+            categoryData.image = req.file.secure_url || req.file.path; // Use secure_url if available
+        } else {
+            console.log('No file uploaded');
         }
+
+        console.log('Category data to save:', categoryData);
 
         // Create a new category
         const newCategory = new Category(categoryData);
-        await newCategory.save();
+        const savedCategory = await newCategory.save();
 
-        res.status(201).json(newCategory);
+        console.log('Category saved successfully:', savedCategory);
+        res.status(201).json(savedCategory);
+        
     } catch (error) {
-        console.error('Error occurred:', error);
-        // Delete uploaded file if there was an error
-        if (req.file) {
-            fs.unlinkSync(req.file.path);
+        console.error('Error in addCategory:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Delete uploaded file from Cloudinary if there was an error
+        if (req.file && req.file.public_id) {
+            try {
+                await cloudinary.uploader.destroy(req.file.public_id);
+                console.log('Cleaned up uploaded file due to error');
+            } catch (cleanupError) {
+                console.error('Error cleaning up file:', cleanupError);
+            }
         }
-        res.status(500).json({ error: error.message });
+        
+        res.status(500).json({ 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
 // Update an existing category with image
 exports.updateCategory = async (req, res) => {
     try {
+        console.log('=== UPDATE CATEGORY DEBUG ===');
+        console.log('Request body:', req.body);
+        console.log('Request file:', req.file);
+        console.log('Request params:', req.params);
+        
         const { name, description, removeImage } = req.body;
         const { id } = req.params;
 
@@ -73,9 +133,15 @@ exports.updateCategory = async (req, res) => {
         // Find the existing category
         const existingCategory = await Category.findById(id);
         if (!existingCategory) {
-            // Delete uploaded file if category doesn't exist
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
+            console.log('Category not found for update');
+            // Delete uploaded file from Cloudinary if category doesn't exist
+            if (req.file && req.file.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(req.file.public_id);
+                    console.log('Cleaned up uploaded file - category not found');
+                } catch (cleanupError) {
+                    console.error('Error cleaning up file:', cleanupError);
+                }
             }
             return res.status(404).json({ error: 'Category not found' });
         }
@@ -85,27 +151,48 @@ exports.updateCategory = async (req, res) => {
 
         // Handle image operations
         if (removeImage === 'true') {
-            // Remove the image - delete the file and set image field to null
-            if (existingCategory.image && fs.existsSync(existingCategory.image)) {
-                fs.unlinkSync(existingCategory.image);
-                console.log('Deleted existing image file:', existingCategory.image);
+            console.log('Removing image from category');
+            if (existingCategory.image) {
+                const publicId = extractPublicId(existingCategory.image);
+                if (publicId) {
+                    try {
+                        await cloudinary.uploader.destroy(`categories/${publicId}`);
+                        console.log('Deleted existing image from Cloudinary:', publicId);
+                    } catch (deleteError) {
+                        console.error('Error deleting existing image:', deleteError);
+                    }
+                }
             }
-            updateData.image = null; // Set image field to null in database
+            updateData.image = null; 
             
-            // Also delete any newly uploaded file since we're removing the image
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
+            // Clean up any newly uploaded file since we're removing the image
+            if (req.file && req.file.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(req.file.public_id);
+                    console.log('Cleaned up newly uploaded file - removing image');
+                } catch (cleanupError) {
+                    console.error('Error cleaning up file:', cleanupError);
+                }
             }
         } else if (req.file) {
+            console.log('Replacing image');
             // Replace with new image
-            // Delete old image if it exists
-            if (existingCategory.image && fs.existsSync(existingCategory.image)) {
-                fs.unlinkSync(existingCategory.image);
-                console.log('Deleted old image file:', existingCategory.image);
+            // Delete old image from Cloudinary if it exists
+            if (existingCategory.image) {
+                const publicId = extractPublicId(existingCategory.image);
+                if (publicId) {
+                    try {
+                        await cloudinary.uploader.destroy(`categories/${publicId}`);
+                        console.log('Deleted old image from Cloudinary:', publicId);
+                    } catch (deleteError) {
+                        console.error('Error deleting old image:', deleteError);
+                    }
+                }
             }
-            updateData.image = req.file.path;
+            updateData.image = req.file.secure_url || req.file.path; // Use secure_url if available
         }
-        // If neither removeImage nor req.file, keep existing image unchanged
+
+        console.log('Update data:', updateData);
 
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
@@ -115,18 +202,28 @@ exports.updateCategory = async (req, res) => {
 
         console.log('Category updated successfully:', updatedCategory);
         res.status(200).json(updatedCategory);
+        
     } catch (error) {
         console.error('Update error:', error);
-        // Delete uploaded file if there was an error
-        if (req.file) {
-            fs.unlinkSync(req.file.path);
+        console.error('Error stack:', error.stack);
+        
+        // Delete uploaded file from Cloudinary if there was an error
+        if (req.file && req.file.public_id) {
+            try {
+                await cloudinary.uploader.destroy(req.file.public_id);
+                console.log('Cleaned up uploaded file due to update error');
+            } catch (cleanupError) {
+                console.error('Error cleaning up file:', cleanupError);
+            }
         }
+        
         res.status(500).json({ 
             error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
+
 // Delete a category and its image
 exports.deleteCategory = async (req, res) => {
     try {
@@ -140,10 +237,17 @@ exports.deleteCategory = async (req, res) => {
             return res.status(404).json({ error: 'Category not found' });
         }
 
-        // Delete associated image file
-        if (deletedCategory.image && fs.existsSync(deletedCategory.image)) {
-            fs.unlinkSync(deletedCategory.image);
-            console.log('Deleted image file:', deletedCategory.image);
+        // Delete associated image file from Cloudinary
+        if (deletedCategory.image) {
+            const publicId = extractPublicId(deletedCategory.image);
+            if (publicId) {
+                try {
+                    await cloudinary.uploader.destroy(`categories/${publicId}`);
+                    console.log('Deleted image from Cloudinary:', publicId);
+                } catch (deleteError) {
+                    console.error('Error deleting image from Cloudinary:', deleteError);
+                }
+            }
         }
         
         console.log('Successfully deleted:', deletedCategory);
@@ -151,11 +255,13 @@ exports.deleteCategory = async (req, res) => {
             message: 'Category deleted successfully',
             deletedId: id
         });
+        
     } catch (error) {
         console.error('Delete error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             error: error.message,
-            deleted: false 
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
@@ -163,9 +269,7 @@ exports.deleteCategory = async (req, res) => {
 // Get all categories   
 exports.getAllCategories = async (req, res) => {
     try {
-        console.log('Fetching from collection:', Category.collection.collectionName);
         const categories = await Category.find({});
-        console.log('Found categories:', categories);
         res.status(200).json(categories);
     } catch (error) {
         console.error('Error occurred:', error);
