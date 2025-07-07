@@ -37,7 +37,7 @@ app.use('/api', categoryRoutes);
 app.use('/api/quicktips', quickTipRoutes);
 
 
-app.get('/', (res) => {
+app.get('/', (req, res) => {
     res.send('Hello from Express!!');
 });
 
