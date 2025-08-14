@@ -4,27 +4,19 @@ const mailService = require("../services/mailService");
 const createUser = async (req, res) => {
   try {
     const newUser = await userService.createUser(req.body); // Create the user first
-    const admin_email = "umeshagodawela@gmail.com"; // Get the admin email from environment variables
-    if (newUser.role === "admin") {
-      console.log("User role is admin");
-      await mailService.sendEmail(
-        newUser.email,
-        "New Admin Registered to Arctic Company!",
-        `${newUser.name},\n\nRegister as an admin.`
-      );
-    } else if (newUser.role === "student") {
+    const admin_email = "medflowa@gmail.com"; // Get the admin email from environment variables
+    if (newUser.role === "student") {
       console.log("User role is student");
       await mailService.sendEmail(
         admin_email,
-        "Welcome Student to Arctic Company!",
-        `Hello ${newUser.name},\n\nWelcome to the student platform.`
+        `A new student has registered with the name ${newUser.name}`
       );
     }
 
     res.status(200).json(newUser);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to create user' });
+    res.status(500).json({ error: "Failed to create user" });
   }
 };
 
@@ -33,7 +25,7 @@ const getAllUsers = async (req, res) => {
     const users = await userService.getAllUsers();
     res.status(200).json(users);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 };
 
