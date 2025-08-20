@@ -21,36 +21,21 @@ const createUser = async (req, res) => {
     // Save token to database
     await userService.saveVerificationToken(newUser.uid, token);
 
-    // Send email to admin
+    // Send simple email to admin
     await mailService.sendEmail(
       admin_email,
-      `New User Registration - ${newUser.role}`,
+      `New User Registration - Approval Required`,
       `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">New User Registration</h2>
-          <p>A new user has registered and requires admin approval:</p>
-          
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Name:</strong> ${newUser.name}</p>
-            <p><strong>Email:</strong> ${newUser.email}</p>
-            <p><strong>Role:</strong> ${newUser.role}</p>
-            <p><strong>Registration Date:</strong> ${new Date().toLocaleDateString()}</p>
-          </div>
-          
-          <p>Please click the button below to approve this user:</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verifyLink}" 
-               style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block;">
-              ✓ Approve User
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 12px;">
-            This verification link will expire in 24 hours.
-          </p>
-        </div>
+        New User Registration:
+        
+        Name: ${newUser.name}
+        Email: ${newUser.email}
+        Role: ${newUser.role}
+        Registration Date: ${new Date().toLocaleDateString()}
+        
+        Click to approve: ${verifyLink}
+        
+        This verification link will expire in 24 hours.
       `
     );
 
@@ -156,31 +141,16 @@ const verifyUser = async (req, res) => {
           user.email,
           "Account Approved - Welcome to MedFlow!",
           `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #4CAF50;">🎉 Account Approved!</h2>
-              <p>Hello ${user.name},</p>
-              
-              <p>Great news! Your account has been approved by our admin team.</p>
-              
-              <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <p><strong>You can now log in to your account using:</strong></p>
-                <p>Email: ${user.email}</p>
-              </div>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://your-app-url.com/login" 
-                   style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                          text-decoration: none; border-radius: 5px; display: inline-block;">
-                  🚀 Login to Your Account
-                </a>
-              </div>
-              
-              <p>Welcome to MedFlow!</p>
-              
-              <p style="color: #666; font-size: 12px;">
-                If you have any questions, please don't hesitate to contact our support team.
-              </p>
-            </div>
+            Hello ${user.name},
+            
+            Great news! Your account has been approved by our admin team.
+            
+            You can now log in to your account using:
+            Email: ${user.email}
+            
+            Welcome to MedFlow!
+            
+            If you have any questions, please contact our support team.
           `
         );
       } catch (emailError) {
@@ -191,10 +161,21 @@ const verifyUser = async (req, res) => {
 
     res.status(200).send(`
       <html>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-          <h2 style="color: #4CAF50;">✅ User Verified Successfully!</h2>
-          <p>The user <strong>${user?.email}</strong> has been approved and can now log in.</p>
-          <p style="color: #666;">A confirmation email has been sent to the user.</p>
+        <head>
+          <title>User Verified</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+            .container { background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .success { color: #4CAF50; font-size: 24px; margin-bottom: 20px; }
+            .email { color: #333; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="success">✅ User Verified Successfully!</div>
+            <p>The user <span class="email">${user?.email}</span> has been approved and can now log in.</p>
+            <p style="color: #666;">A confirmation email has been sent to the user.</p>
+          </div>
         </body>
       </html>
     `);

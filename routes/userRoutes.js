@@ -7,6 +7,6 @@ router.get('/users', userController.getAllUsers);
 router.put('/users/:uid', userController.updateUser);
 router.get('/users/:uid', userController.getUserByUid);
 router.get('/users/:uid/role', userController.getUserRoleByUid);
-router.get('/users/:uid/verify/:token', userController.verifyUser);
+router.get('/users/verify/:uid/:token', userController.verifyUser);
 
 module.exports = router;
