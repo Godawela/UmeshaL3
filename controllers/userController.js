@@ -1,5 +1,7 @@
 const userService = require("../services/userService");
 const mailService = require("../services/mailService");
+const crypto = require("crypto");
+
 
 const createUser = async (req, res) => {
   try {
@@ -13,7 +15,7 @@ const createUser = async (req, res) => {
     if (newUser.role === "student") {
       console.log("User role is student");
 
-      // Create verification token (can also save in DB if needed)
+      // Create verification token 
       const token = crypto.randomBytes(32).toString("hex");
       const verifyLink = `https://medflow-phi.vercel.app/api/users/verify/${newUser.uid}/${token}`;
 
