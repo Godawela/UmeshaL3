@@ -27,11 +27,26 @@ const getUserRoleByUid = async (uid) => {
   return await User.findOne({ uid }, { role: 1, _id: 0 });
 };
 
+const saveVerificationToken = async (uid, token) => {
+  return await User.findOneAndUpdate({ uid }, { verificationToken: token });
+};
+
+const verifyUser = async (uid, token) => {
+  const user = await User.findOne({ uid, verificationToken: token });
+  if (!user) return false;
+
+  user.verified = true;
+  user.verificationToken = undefined; // clear token
+  await user.save();
+  return true;
+};
 
 module.exports = {
   createUser,
   getAllUsers,
   updateUser,
   getUserByUid,
-  getUserRoleByUid
+  getUserRoleByUid,
+  saveVerificationToken,
+  verifyUser
 };

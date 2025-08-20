@@ -3,13 +3,34 @@ const mailService = require("../services/mailService");
 
 const createUser = async (req, res) => {
   try {
-    const newUser = await userService.createUser(req.body); // Create the user first
-    const admin_email = "medflowa@gmail.com"; // Get the admin email from environment variables
+    const newUser = await userService.createUser({
+      ...req.body,
+      verified: false, // set as unverified by default
+    });
+
+    const admin_email = "medflowa@gmail.com";
+
     if (newUser.role === "student") {
       console.log("User role is student");
+
+      // Create verification token (can also save in DB if needed)
+      const token = crypto.randomBytes(32).toString("hex");
+      const verifyLink = `https://medflow-phi.vercel.app/api/users/verify/${newUser.uid}/${token}`;
+
+      // Save token temporarily in DB or Redis (simplest way: add token field in user doc)
+      await userService.saveVerificationToken(newUser.uid, token);
+
       await mailService.sendEmail(
         admin_email,
-        `A new student has registered with the name ${newUser.name}`
+        `A new student has registered.`,
+        `
+          A new student has registered with:
+          <br>Name: ${newUser.name} 
+          <br>Email: ${newUser.email} 
+          <br><br>
+          Please click the link below to verify:
+          <br><a href="${verifyLink}">Verify User</a>
+        `
       );
     }
 
@@ -74,10 +95,27 @@ const getUserRoleByUid = async (req, res) => {
   }
 };
 
+const verifyUser = async (req, res) => {
+  try {
+    const { uid, token } = req.params;
+
+    const isValid = await userService.verifyUser(uid, token);
+    if (!isValid) {
+      return res.status(400).json({ error: "Invalid or expired verification link" });
+    }
+
+    res.status(200).send("User verified successfully. They can now log in.");
+  } catch (err) {
+    res.status(500).json({ error: "Failed to verify user" });
+  }
+};
+
+
 module.exports = {
   createUser,
   getAllUsers,
   updateUser,
   getUserByUid,
   getUserRoleByUid,
+  verifyUser
 };
