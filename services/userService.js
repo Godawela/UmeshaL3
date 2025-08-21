@@ -41,6 +41,14 @@ const verifyUser = async (uid, token) => {
   return true;
 };
 
+const deleteUser = async (uid) => {
+  try {
+    return await User.findOneAndDelete({ uid: uid });
+  } catch (error) {
+    throw new Error(`Error deleting user: ${error.message}`);
+  }
+};
+
 module.exports = {
   createUser,
   getAllUsers,
@@ -48,5 +56,6 @@ module.exports = {
   getUserByUid,
   getUserRoleByUid,
   saveVerificationToken,
-  verifyUser
+  verifyUser,
+  deleteUser
 };
