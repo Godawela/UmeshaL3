@@ -4,7 +4,7 @@ const { upload, handleMulterError } = require('../config/multer');
 
 const router = express.Router();
 
-// router.post('/symptoms', upload.single('image'), symptomController.createSymptom, handleMulterError);
+router.post('/symptoms', upload.single('image'), symptomController.createSymptom, handleMulterError);
 router.get('/symptoms', symptomController.getSymptoms);
 router.get('/symptoms/name/:name', symptomController.getSymptomByName);
 router.get('/symptoms/:id', symptomController.getSymptomById);
