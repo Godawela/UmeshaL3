@@ -60,9 +60,8 @@ exports.updateSymptom = async (req, res) => {
     };
 
     if (req.file) {
-      // Multer + CloudinaryStorage already uploaded the image
-      // The file URL is stored in req.file.path
-      updates.image = req.file.path; 
+      const uploadedImage = await uploadToCloudinary(req.file.path);
+      updates.image = uploadedImage.url;
     } else if (req.body.removeImage === 'true') {
       updates.image = null;
     }
@@ -80,7 +79,6 @@ exports.updateSymptom = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 
 // Delete a symptom by ID
