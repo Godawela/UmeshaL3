@@ -1,6 +1,4 @@
 const Symptom = require('../models/symptomModel');
-const { upload } = require('../middlewares/multerConfig'); 
-
 
 // Create a new symptom
 exports.createSymptom = async (req, res) => {
@@ -53,33 +51,14 @@ exports.getSymptomById = async (req, res) => {
 
 // Update a symptom by ID
 exports.updateSymptom = async (req, res) => {
-  try {
-    const updates = {
-      name: req.body.name,
-      description: req.body.description,
-      resourceLink: req.body.resourceLink,
-    };
-
-    // Handle image removal
-    if (req.body.removeImage === 'true') {
-      updates.image = null;
+    try {
+        const symptom = await Symptom.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        if (!symptom) return res.status(404).json({ error: 'Symptom not found' });
+        res.status(200).json(symptom);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
-
-    // Handle new image upload
-    if (req.file) {
-      updates.image = req.file.path; // multer-storage-cloudinary gives the URL in path
-    }
-
-const symptom = await symptomService.updateSymptomById(req.params.id, updates);
-    if (!symptom) return res.status(404).json({ error: 'Symptom not found' });
-
-    res.status(200).json(symptom);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
 };
-
-
 
 // Delete a symptom by ID
 exports.deleteSymptom = async (req, res) => {
