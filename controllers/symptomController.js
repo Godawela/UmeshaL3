@@ -1,4 +1,5 @@
 const Symptom = require('../models/symptomModel');
+const { upload } = require('../middlewares/multerConfig');
 
 // Create a new symptom
 exports.createSymptom = async (req, res) => {
@@ -59,7 +60,6 @@ exports.updateSymptom = async (req, res) => {
     };
 
     if (req.file) {
-      // If a new image is uploaded, handle it (e.g., upload to Cloudinary)
       const uploadedImage = await uploadToCloudinary(req.file.path);
       updates.image = uploadedImage.url;
     } else if (req.body.removeImage === 'true') {
