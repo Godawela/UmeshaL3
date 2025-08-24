@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/symptoms', symptomController.getSymptoms);
 router.get('/symptoms/name/:name', symptomController.getSymptomByName);
 router.get('/symptoms/:id', symptomController.getSymptomById);
-router.patch('/symptoms/:id', upload.single('image'), updateSymptom);
+router.patch('/symptoms/:id', upload.single('image'), symptomController.updateSymptom);
 router.delete('/symptoms/:id', symptomController.deleteSymptom);
 
 module.exports = router;

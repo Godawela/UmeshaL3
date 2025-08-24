@@ -52,7 +52,7 @@ exports.getSymptomById = async (req, res) => {
 };
 
 // Update a symptom by ID
-const updateSymptom = async (req, res) => {
+exports.updateSymptom = async (req, res) => {
   try {
     const updates = {
       name: req.body.name,
