@@ -7,7 +7,7 @@ const path = require('path');
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'categories', // Fixed: Changed from 'category' to 'categories' for consistency
+        folder: 'categories', 
         allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'svg'],
         transformation: [
             {
