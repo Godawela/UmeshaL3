@@ -54,6 +54,12 @@ exports.getSymptomById = async (req, res) => {
 // Update a symptom by ID
 exports.updateSymptom = async (req, res) => {
   try {
+    console.log('Update request received:', {
+      id: req.params.id,
+      body: req.body,
+      file: req.file ? 'File uploaded' : 'No file'
+    });
+
     const updates = {
       name: req.body.name,
       description: req.body.description,
@@ -63,23 +69,30 @@ exports.updateSymptom = async (req, res) => {
     // Handle image removal
     if (req.body.removeImage === 'true') {
       updates.image = null;
+      console.log('Removing image');
     }
 
     // Handle new image upload
     if (req.file) {
-      updates.image = req.file.path; // multer-storage-cloudinary gives the URL in path
+      updates.image = req.file.path;
+      console.log('New image uploaded:', req.file.path);
     }
 
-    const symptom = await Symptom.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
-    if (!symptom) return res.status(404).json({ error: 'Symptom not found' });
+    console.log('Final updates object:', updates);
 
+    const symptom = await symptomService.updateSymptomById(req.params.id, updates);
+    
+    if (!symptom) {
+      return res.status(404).json({ error: 'Symptom not found' });
+    }
+
+    console.log('Symptom updated successfully:', symptom);
     res.status(200).json(symptom);
   } catch (error) {
+    console.error('Update error:', error);
     res.status(400).json({ error: error.message });
   }
 };
-
-
 
 // Delete a symptom by ID
 exports.deleteSymptom = async (req, res) => {

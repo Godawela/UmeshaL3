@@ -22,9 +22,20 @@ class SymptomService {
         return await Symptom.findByIdAndDelete(id);
     }
 
-    async updateSymptomById(id, updates) {
-        return await Symptom.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+  async updateSymptomById(id, updates) {
+    try {
+        console.log('Service: Updating symptom with ID:', id, 'Updates:', updates);
+        const result = await Symptom.findByIdAndUpdate(id, updates, { 
+            new: true, 
+            runValidators: true 
+        });
+        console.log('Service: Update result:', result);
+        return result;
+    } catch (error) {
+        console.error('Service: Update error:', error);
+        throw error;
     }
+}
 }
 
 module.exports = new SymptomService();
