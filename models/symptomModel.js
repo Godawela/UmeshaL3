@@ -14,11 +14,7 @@ const symptomSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-     image: {
-        type: String, // Store file path or URL
-        required: false,
-        default: null
-    },
+    
 }, { timestamps: true });
 
 const Symptom = mongoose.model('Symptom', symptomSchema);
