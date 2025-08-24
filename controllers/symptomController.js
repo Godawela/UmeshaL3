@@ -52,7 +52,7 @@ exports.getSymptomById = async (req, res) => {
 };
 
 // Update a symptom by ID
-exports.updateSymptom = async (req, res) => {
+const updateSymptom = async (req, res) => {
   try {
     const updates = {
       name: req.body.name,
@@ -60,19 +60,17 @@ exports.updateSymptom = async (req, res) => {
       resourceLink: req.body.resourceLink,
     };
 
-    if (req.file) {
-    
-      updates.image = req.file.path; 
-    } else if (req.body.removeImage === 'true') {
+    // Handle image removal
+    if (req.body.removeImage === 'true') {
       updates.image = null;
     }
 
-    const symptom = await Symptom.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true }
-    );
+    // Handle new image upload
+    if (req.file) {
+      updates.image = req.file.path; // multer-storage-cloudinary gives the URL in path
+    }
 
+    const symptom = await Symptom.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     if (!symptom) return res.status(404).json({ error: 'Symptom not found' });
 
     res.status(200).json(symptom);
@@ -80,6 +78,7 @@ exports.updateSymptom = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 
 // Delete a symptom by ID
