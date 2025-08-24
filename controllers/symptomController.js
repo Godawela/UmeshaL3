@@ -52,14 +52,15 @@ exports.getSymptomById = async (req, res) => {
 };
 
 // Update a symptom by ID
+// In your existing symptomController.js - just add logging
 exports.updateSymptom = async (req, res) => {
   try {
-    console.log('Update request received:', {
-      id: req.params.id,
-      body: req.body,
-      file: req.file ? 'File uploaded' : 'No file'
-    });
-
+    // ADD ONLY THIS LOGGING
+    console.log('=== UPDATE DEBUG ===');
+    console.log('Request ID:', req.params.id);
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file ? 'File present' : 'No file');
+    
     const updates = {
       name: req.body.name,
       description: req.body.description,
@@ -69,27 +70,29 @@ exports.updateSymptom = async (req, res) => {
     // Handle image removal
     if (req.body.removeImage === 'true') {
       updates.image = null;
-      console.log('Removing image');
+      console.log('Setting image to null');
     }
 
     // Handle new image upload
     if (req.file) {
       updates.image = req.file.path;
-      console.log('New image uploaded:', req.file.path);
+      console.log('New image path:', req.file.path);
     }
 
-    console.log('Final updates object:', updates);
+    console.log('Final updates:', updates);
 
-    const symptom = await symptomService.updateSymptomById(req.params.id, updates);
+    const symptom = await Symptom.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     
     if (!symptom) {
+      console.log('Symptom not found with ID:', req.params.id);
       return res.status(404).json({ error: 'Symptom not found' });
     }
 
-    console.log('Symptom updated successfully:', symptom);
+    console.log('Update successful:', symptom);
     res.status(200).json(symptom);
   } catch (error) {
-    console.error('Update error:', error);
+    console.error('Update error:', error.message);
+    console.error('Stack trace:', error.stack);
     res.status(400).json({ error: error.message });
   }
 };
