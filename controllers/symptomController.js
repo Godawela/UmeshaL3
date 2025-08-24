@@ -3,13 +3,19 @@ const Symptom = require('../models/symptomModel');
 // Create a new symptom
 exports.createSymptom = async (req, res) => {
     try {
-        const symptom = new Symptom(req.body);
+        const symptomData = {
+            ...req.body,
+            image: req.file ? req.file.path : null
+        };
+
+        const symptom = new Symptom(symptomData);
         await symptom.save();
         res.status(201).json(symptom);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
+
 
 // Get all symptoms
 exports.getSymptoms = async (req, res) => {
