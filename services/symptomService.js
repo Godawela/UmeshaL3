@@ -21,6 +21,10 @@ class SymptomService {
     async removeSymptomById(id) {
         return await Symptom.findByIdAndDelete(id);
     }
+
+    async updateSymptomById(id, updates) {
+        return await Symptom.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+    }
 }
 
 module.exports = new SymptomService();
