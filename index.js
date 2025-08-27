@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes'); // Correct path
 const noteRoutes = require('./routes/noteRoutes'); // Correct path
 const categoryRoutes = require('./routes/categoryRoutes'); // Correct path
 const quickTipRoutes = require('./routes/quickTipRoutes'); // Correct path for quick tips
+const questionRoutes = require('./routes/questionRoutes'); // Correct path for questions
 
 
 const port = process.env.PORT || "8000";
@@ -35,6 +36,7 @@ app.use('/api', userRoutes);
 app.use('/api', noteRoutes); 
 app.use('/api', categoryRoutes);
 app.use('/api/quicktips', quickTipRoutes);
+app.use('/api/questions', questionRoutes);
 
 
 app.get('/', (req, res) => {
