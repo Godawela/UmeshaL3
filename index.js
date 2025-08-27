@@ -36,7 +36,7 @@ app.use('/api', userRoutes);
 app.use('/api', noteRoutes); 
 app.use('/api', categoryRoutes);
 app.use('/api/quicktips', quickTipRoutes);
-app.use('/api/questions', questionRoutes);
+app.use('/api', questionRoutes);
 
 
 app.get('/', (req, res) => {
