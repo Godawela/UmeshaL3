@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+// Initialize Firebase Admin
+const serviceAccount = require('./config/service-account-key.json'); // Update path
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 const deviceRoutes = require('./routes/deviceRoutes'); // Correct path
 const symptomRoutes = require('./routes/symptomRoutes'); // Correct path
 const userRoutes = require('./routes/userRoutes'); // Correct path
@@ -8,6 +14,79 @@ const noteRoutes = require('./routes/noteRoutes'); // Correct path
 const categoryRoutes = require('./routes/categoryRoutes'); // Correct path
 const quickTipRoutes = require('./routes/quickTipRoutes'); // Correct path for quick tips
 const questionRoutes = require('./routes/questionRoutes'); // Correct path for questions
+
+const admin = require('firebase-admin');
+
+
+
+// Store FCM tokens endpoint
+app.post('/api/fcm-tokens', async (req, res) => {
+  try {
+    const { token, userId } = req.body;
+    
+    // Update your User model to include FCM token
+    const User = require('./models/User'); // Adjust path to your User model
+    await User.findByIdAndUpdate(userId, {
+      fcmToken: token,
+      tokenUpdatedAt: new Date()
+    });
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error storing FCM token:', error);
+    res.status(500).json({ error: 'Failed to store FCM token' });
+  }
+});
+
+// Notify all admins of new question
+app.post('/api/notify-admins', async (req, res) => {
+  try {
+    const { studentName, questionPreview, type } = req.body;
+    
+    // Get all admin users with FCM tokens
+    const User = require('./models/userModel'); // Adjust path
+    const admins = await User.find({ 
+      role: 'admin', 
+      fcmToken: { $exists: true, $ne: null } 
+    });
+    
+    const adminTokens = admins.map(admin => admin.fcmToken).filter(token => token);
+    
+    if (adminTokens.length === 0) {
+      return res.status(200).json({ message: 'No admin tokens found' });
+    }
+    
+    // Prepare the notification
+    const message = {
+      notification: {
+        title: `New Question from ${studentName}`,
+        body: questionPreview.length > 100 
+          ? `${questionPreview.substring(0, 100)}...`
+          : questionPreview,
+      },
+      data: {
+        type: 'new_question',
+        payload: 'view_questions'
+      },
+      tokens: adminTokens
+    };
+    
+    // Send to all admin devices
+    const response = await admin.messaging().sendEachForMulticast(message);
+    
+    console.log(`Successfully sent to ${response.successCount} devices`);
+    
+    res.status(200).json({ 
+      success: true,
+      successCount: response.successCount,
+      failureCount: response.failureCount
+    });
+    
+  } catch (error) {
+    console.error('Error sending admin notifications:', error);
+    res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
 
 
 const port = process.env.PORT || "8000";

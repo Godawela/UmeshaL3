@@ -8,6 +8,14 @@ const userSchema = new mongoose.Schema({
   verified: { type: Boolean, default: false },
   verificationToken: { type: String, default: null },
   verificationTokenExpires: { type: Date, default: null },
+  fcmToken: {
+  type: String,
+  default: null
+},
+tokenUpdatedAt: {
+  type: Date,
+  default: null
+}
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
