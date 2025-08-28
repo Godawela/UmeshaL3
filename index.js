@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Initialize Firebase Admin
-const serviceAccount = require('./config/service-account-key.json'); // Update path
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
 
 const deviceRoutes = require('./routes/deviceRoutes'); // Correct path
 const symptomRoutes = require('./routes/symptomRoutes'); // Correct path
@@ -17,6 +12,11 @@ const questionRoutes = require('./routes/questionRoutes'); // Correct path for q
 
 const admin = require('firebase-admin');
 
+// Initialize Firebase Admin
+const serviceAccount = require('./config/service-account-key.json'); // Update path
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 
 // Store FCM tokens endpoint
