@@ -3,4 +3,4 @@
 
 # Ignore environment variable files
 .env
-./config/
+/config/service-account-key.json
