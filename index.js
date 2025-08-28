@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-console.log('=== ENV LOADING DEBUG ===');
-console.log('FIREBASE_PROJECT_ID exists:', !!process.env.FIREBASE_PROJECT_ID);
-console.log('FIREBASE_PRIVATE_KEY exists:', !!process.env.FIREBASE_PRIVATE_KEY);
-console.log('FIREBASE_CLIENT_EMAIL exists:', !!process.env.FIREBASE_CLIENT_EMAIL);
+console.log('=== ALL ENV VARIABLES ===');
+Object.keys(process.env).forEach(key => {
+  if (key.includes('FIREBASE') || key.includes('CLOUD')) {
+    console.log(`${key}:`, process.env[key] ? 'EXISTS' : 'MISSING');
+  }
+});
 console.log('========================');
 
 
