@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+console.log('=== ENV LOADING DEBUG ===');
+console.log('FIREBASE_PROJECT_ID exists:', !!process.env.FIREBASE_PROJECT_ID);
+console.log('FIREBASE_PRIVATE_KEY exists:', !!process.env.FIREBASE_PRIVATE_KEY);
+console.log('FIREBASE_CLIENT_EMAIL exists:', !!process.env.FIREBASE_CLIENT_EMAIL);
+console.log('========================');
+
 
 const deviceRoutes = require('./routes/deviceRoutes'); // Correct path
 const symptomRoutes = require('./routes/symptomRoutes'); // Correct path
