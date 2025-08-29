@@ -103,10 +103,11 @@ app.post('/api/notify-admins', async (req, res) => {
     
     // Get all admin users with FCM tokens
     const User = require('./models/userModel'); 
-    const admins = await User.find({ 
-      role: 'Admin', 
-      fcmToken: { $exists: true, $ne: null } 
-    });
+  const admins = await User.find({ 
+  role: { $regex: /^Admin$/i }, 
+  fcmToken: { $exists: true, $ne: null } 
+});
+
     
     const adminTokens = admins.map(admin => admin.fcmToken).filter(token => token);
     
