@@ -60,7 +60,7 @@ app.post('/api/fcm-tokens', async (req, res) => {
     const { token, userId } = req.body;
     
     // Update your User model to include FCM token
-    const User = require('../models/userModel'); 
+    const User = require('./models/userModel'); 
     await User.findByIdAndUpdate(userId, {
       fcmToken: token,
       tokenUpdatedAt: new Date()
@@ -79,7 +79,7 @@ app.post('/api/notify-admins', async (req, res) => {
     const { studentName, questionPreview, type } = req.body;
     
     // Get all admin users with FCM tokens
-    const User = require('../models/userModel'); 
+    const User = require('./models/userModel'); 
     const admins = await User.find({ 
       role: 'Admin', 
       fcmToken: { $exists: true, $ne: null } 
@@ -127,7 +127,7 @@ app.post('/api/notify-student', async (req, res) => {
   try {
     const { studentId, replyPreview, type } = req.body;
     
-    const User = require('../models/userModel');
+    const User = require('./models/userModel');
     const student = await User.findById(studentId);
     
     if (!student || !student.fcmToken) {
