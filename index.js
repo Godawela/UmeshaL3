@@ -96,27 +96,83 @@ app.post('/api/fcm-tokens', async (req, res) => {
   }
 });
 
-// Notify all admins of new question
+// Test FCM token endpoint
+app.post('/api/test-fcm', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ error: 'Token required' });
+    }
+    
+    const message = {
+      notification: {
+        title: 'Test Notification',
+        body: 'This is a test notification to verify FCM setup'
+      },
+      data: {
+        type: 'test',
+        timestamp: new Date().toISOString()
+      },
+      // Add platform-specific options
+      android: {
+        notification: {
+          channelId: 'high_importance_channel',
+          priority: 'high',
+          defaultSound: true,
+          defaultVibrateTimings: true
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
+      },
+      token: token
+    };
+    
+    const response = await admin.messaging().send(message);
+    console.log('Test notification sent successfully:', response);
+    
+    res.status(200).json({ 
+      success: true, 
+      messageId: response,
+      message: 'Test notification sent successfully'
+    });
+    
+  } catch (error) {
+    console.error('Test notification failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.code || error.message,
+      details: error
+    });
+  }
+});
+
+// Enhanced admin notification endpoint
 app.post('/api/notify-admins', async (req, res) => {
   try {
     const { studentName, questionPreview, type } = req.body;
     
     // Get all admin users with FCM tokens
     const User = require('./models/userModel'); 
-  const admins = await User.find({ 
-  role: { $regex: /^Admin$/i }, 
-  fcmToken: { $exists: true, $ne: null } 
-});
+    const admins = await User.find({ 
+      role: { $regex: /^Admin$/i }, 
+      fcmToken: { $exists: true, $ne: null } 
+    });
 
-    
-const adminTokens = admins.map(a => a.fcmToken).filter(Boolean);
-console.log('Admin tokens to send:', adminTokens);
+    const adminTokens = admins.map(a => a.fcmToken).filter(Boolean);
+    console.log('Admin tokens found:', adminTokens.length);
     
     if (adminTokens.length === 0) {
       return res.status(200).json({ message: 'No admin tokens found' });
     }
     
-    // Prepare the notification
+    // Prepare the notification with better structure
     const message = {
       notification: {
         title: `New Question from ${studentName}`,
@@ -126,28 +182,102 @@ console.log('Admin tokens to send:', adminTokens);
       },
       data: {
         type: 'new_question',
-        payload: 'view_questions'
+        payload: 'view_questions',
+        timestamp: new Date().toISOString(),
+        studentName: studentName
+      },
+      // Add Android-specific options
+      android: {
+        notification: {
+          channelId: 'high_importance_channel',
+          priority: 'high',
+          defaultSound: true,
+          defaultVibrateTimings: true,
+          icon: 'ic_notification'
+        }
+      },
+      // Add iOS-specific options
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            alert: {
+              title: `New Question from ${studentName}`,
+              body: questionPreview.length > 100 
+                ? `${questionPreview.substring(0, 100)}...`
+                : questionPreview,
+            }
+          }
+        }
       },
       tokens: adminTokens
     };
     
+    console.log('Sending notification to tokens:', adminTokens.map(t => t.substring(0, 20) + '...'));
+    
     // Send to all admin devices
     const response = await admin.messaging().sendEachForMulticast(message);
     
-    console.log(`Successfully sent to ${response.successCount} devices`);
-    
-    res.status(200).json({ 
-      success: true,
+    console.log(`Notification results:`, {
       successCount: response.successCount,
       failureCount: response.failureCount
     });
     
+    // Log detailed results
+    response.responses.forEach((resp, index) => {
+      const tokenPreview = adminTokens[index].substring(0, 20) + '...';
+      if (resp.success) {
+        console.log(`✅ Success to ${tokenPreview}: ${resp.messageId}`);
+      } else {
+        console.log(`❌ Failed to ${tokenPreview}: ${resp.error?.code} - ${resp.error?.message}`);
+      }
+    });
+    
+    // Handle failed tokens - remove invalid ones
+    const failedTokens = [];
+    response.responses.forEach((resp, index) => {
+      if (!resp.success && resp.error) {
+        const errorCode = resp.error.code;
+        // These error codes indicate invalid tokens that should be removed
+        if (['messaging/invalid-registration-token', 
+             'messaging/registration-token-not-registered',
+             'messaging/invalid-argument'].includes(errorCode)) {
+          failedTokens.push({
+            token: adminTokens[index],
+            adminId: admins[index]._id
+          });
+        }
+      }
+    });
+    
+    // Remove invalid tokens from database
+    if (failedTokens.length > 0) {
+      console.log('Removing invalid tokens:', failedTokens.length);
+      for (const failed of failedTokens) {
+        await User.findByIdAndUpdate(failed.adminId, {
+          $unset: { fcmToken: 1, tokenUpdatedAt: 1 }
+        });
+      }
+    }
+    
+    res.status(200).json({ 
+      success: true,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+      invalidTokensRemoved: failedTokens.length
+    });
+    
   } catch (error) {
     console.error('Error sending admin notifications:', error);
-    res.status(500).json({ error: 'Failed to send notifications' });
+    res.status(500).json({ 
+      error: 'Failed to send notifications',
+      details: error.message 
+    });
   }
 });
 
+// Enhanced student notification endpoint
 app.post('/api/notify-student', async (req, res) => {
   try {
     const { studentId, replyPreview, type } = req.body;
@@ -166,18 +296,80 @@ app.post('/api/notify-student', async (req, res) => {
       },
       data: {
         type: 'admin_reply',
-        payload: 'view_replies'
+        payload: 'view_replies',
+        timestamp: new Date().toISOString()
+      },
+      // Add Android-specific options
+      android: {
+        notification: {
+          channelId: 'high_importance_channel',
+          priority: 'high',
+          defaultSound: true,
+          defaultVibrateTimings: true
+        }
+      },
+      // Add iOS-specific options
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
       },
       token: student.fcmToken
     };
     
-    const response = await admin.messaging().send(message);
-    console.log('Successfully sent to student:', response);
-    
-    res.status(200).json({ success: true });
+    try {
+      const response = await admin.messaging().send(message);
+      console.log('✅ Successfully sent to student:', response);
+      
+      res.status(200).json({ success: true, messageId: response });
+    } catch (error) {
+      console.error('❌ Failed to send to student:', error);
+      
+      // If token is invalid, remove it
+      if (['messaging/invalid-registration-token', 
+           'messaging/registration-token-not-registered'].includes(error.code)) {
+        await User.findByIdAndUpdate(studentId, {
+          $unset: { fcmToken: 1, tokenUpdatedAt: 1 }
+        });
+        console.log('Removed invalid student token');
+      }
+      
+      res.status(500).json({ 
+        error: 'Failed to send notification',
+        code: error.code 
+      });
+    }
   } catch (error) {
-    console.error('Error sending student notification:', error);
-    res.status(500).json({ error: 'Failed to send notification' });
+    console.error('Error in notify-student endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all FCM tokens for debugging
+app.get('/api/fcm-tokens/debug', async (req, res) => {
+  try {
+    const User = require('./models/userModel');
+    const users = await User.find({
+      fcmToken: { $exists: true, $ne: null }
+    }).select('email role fcmToken tokenUpdatedAt');
+    
+    const tokenInfo = users.map(user => ({
+      email: user.email,
+      role: user.role,
+      tokenPreview: user.fcmToken ? user.fcmToken.substring(0, 20) + '...' : 'none',
+      updatedAt: user.tokenUpdatedAt
+    }));
+    
+    res.status(200).json({
+      totalTokens: users.length,
+      tokens: tokenInfo
+    });
+  } catch (error) {
+    console.error('Error fetching token info:', error);
+    res.status(500).json({ error: 'Failed to fetch token info' });
   }
 });
 
