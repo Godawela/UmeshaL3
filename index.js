@@ -60,7 +60,7 @@ app.post('/api/fcm-tokens', async (req, res) => {
     const { token, userId } = req.body;
     
     // Update your User model to include FCM token
-    const User = require('./models/User'); // Adjust path to your User model
+    const User = require('../models/userModel'); // Adjust path to your User model
     await User.findByIdAndUpdate(userId, {
       fcmToken: token,
       tokenUpdatedAt: new Date()
