@@ -57,19 +57,42 @@ const questionRoutes = require('./routes/questionRoutes');
 // Store FCM tokens endpoint
 app.post('/api/fcm-tokens', async (req, res) => {
   try {
+    console.log('=== FCM Token Storage Request ===');
+    console.log('Request body:', req.body);
+    
     const { token, userId } = req.body;
     
-    // Update your User model to include FCM token
-    const User = require('./models/userModel'); 
-    await User.findByIdAndUpdate(userId, {
+    if (!token || !userId) {
+      console.log('Missing token or userId');
+      return res.status(400).json({ error: 'Token and userId required' });
+    }
+    
+    const User = require('./models/userModel');
+    
+    // Find user by uid (not _id)
+    console.log('Looking for user with uid:', userId);
+    const user = await User.findOne({ uid: userId });
+    
+    if (!user) {
+      console.log('User not found with uid:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log('Found user:', user.email, 'Role:', user.role);
+    
+    // Update using the MongoDB _id, not the Firebase uid
+    const updated = await User.findByIdAndUpdate(user._id, {
       fcmToken: token,
       tokenUpdatedAt: new Date()
-    });
+    }, { new: true });
+    
+    console.log('Updated user FCM token:', updated.fcmToken ? 'Success' : 'Failed');
+    console.log('=== End FCM Token Storage ===');
     
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error storing FCM token:', error);
-    res.status(500).json({ error: 'Failed to store FCM token' });
+    res.status(500).json({ error: 'Failed to store FCM token', details: error.message });
   }
 });
 
