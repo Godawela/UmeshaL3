@@ -60,7 +60,7 @@ app.post('/api/fcm-tokens', async (req, res) => {
     const { token, userId } = req.body;
     
     // Update your User model to include FCM token
-    const User = require('../models/userModel'); // Adjust path to your User model
+    const User = require('../models/userModel'); 
     await User.findByIdAndUpdate(userId, {
       fcmToken: token,
       tokenUpdatedAt: new Date()
@@ -79,7 +79,7 @@ app.post('/api/notify-admins', async (req, res) => {
     const { studentName, questionPreview, type } = req.body;
     
     // Get all admin users with FCM tokens
-    const User = require('./models/userModel'); // Adjust path
+    const User = require('../models/userModel'); 
     const admins = await User.find({ 
       role: 'Admin', 
       fcmToken: { $exists: true, $ne: null } 
@@ -120,6 +120,39 @@ app.post('/api/notify-admins', async (req, res) => {
   } catch (error) {
     console.error('Error sending admin notifications:', error);
     res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+app.post('/api/notify-student', async (req, res) => {
+  try {
+    const { studentId, replyPreview, type } = req.body;
+    
+    const User = require('../models/userModel');
+    const student = await User.findById(studentId);
+    
+    if (!student || !student.fcmToken) {
+      return res.status(200).json({ message: 'Student token not found' });
+    }
+    
+    const message = {
+      notification: {
+        title: 'New Reply from Admin',
+        body: replyPreview,
+      },
+      data: {
+        type: 'admin_reply',
+        payload: 'view_replies'
+      },
+      token: student.fcmToken
+    };
+    
+    const response = await admin.messaging().send(message);
+    console.log('Successfully sent to student:', response);
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error sending student notification:', error);
+    res.status(500).json({ error: 'Failed to send notification' });
   }
 });
 
