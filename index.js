@@ -109,7 +109,8 @@ app.post('/api/notify-admins', async (req, res) => {
 });
 
     
-    const adminTokens = admins.map(admin => admin.fcmToken).filter(token => token);
+const adminTokens = admins.map(a => a.fcmToken).filter(Boolean);
+console.log('Admin tokens to send:', adminTokens);
     
     if (adminTokens.length === 0) {
       return res.status(200).json({ message: 'No admin tokens found' });
