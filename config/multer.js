@@ -56,18 +56,18 @@ const fileFilter = (req, file, cb) => {
 
     // Check MIME type
     if (allowedMimeTypes.includes(file.mimetype)) {
-        console.log('✅ File accepted (valid MIME type):', file.originalname);
+        console.log('File accepted (valid MIME type):', file.originalname);
         return cb(null, true);
     }
 
     // If MIME type check fails, check extension as fallback
     if (allowedExtensions.includes(fileExtension)) {
-        console.log('✅ File accepted (valid extension):', file.originalname);
+        console.log('File accepted (valid extension):', file.originalname);
         return cb(null, true);
     }
 
     // Reject the file
-    console.log('❌ File rejected:', {
+    console.log('File rejected:', {
         filename: file.originalname,
         mimetype: file.mimetype,
         extension: fileExtension

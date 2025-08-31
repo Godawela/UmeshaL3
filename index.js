@@ -69,13 +69,13 @@ if (!admin.apps.length) {
       throw new Error('No Firebase credentials found in environment variables');
     }
     
-    console.log('✅ Firebase initialized successfully');
+    console.log('Firebase initialized successfully');
   } catch (error) {
-    console.error('❌ Firebase initialization failed:', error.message);
+    console.error('Firebase initialization failed:', error.message);
     process.exit(1); // Exit if Firebase can't be initialized
   }
 } else {
-  console.log('✅ Firebase already initialized - using existing app');
+  console.log('Firebase already initialized - using existing app');
 }
 
 // Database connection
@@ -311,9 +311,9 @@ app.post('/api/notify-admins', async (req, res) => {
     response.responses.forEach((resp, index) => {
       const tokenPreview = validTokens[index].substring(0, 20) + '...';
       if (resp.success) {
-        console.log(`✅ Success to ${tokenPreview}: ${resp.messageId}`);
+        console.log(`Success to ${tokenPreview}: ${resp.messageId}`);
       } else {
-        console.log(`❌ Failed to ${tokenPreview}: ${resp.error?.code} - ${resp.error?.message}`);
+        console.log(`Failed to ${tokenPreview}: ${resp.error?.code} - ${resp.error?.message}`);
       }
     });
     

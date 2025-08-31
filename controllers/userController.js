@@ -123,7 +123,7 @@ const verifyUser = async (req, res) => {
       return res.status(400).send(`
         <html>
           <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h2 style="color: #e74c3c;">❌ Verification Failed</h2>
+            <h2 style="color: #e74c3c;">Verification Failed</h2>
             <p>Invalid or expired verification link.</p>
             <p>Please contact support if you believe this is an error.</p>
           </body>
@@ -172,7 +172,7 @@ const verifyUser = async (req, res) => {
         </head>
         <body>
           <div class="container">
-            <div class="success">✅ User Verified Successfully!</div>
+            <div class="success">User Verified Successfully!</div>
             <p>The user <span class="email">${user?.email}</span> has been approved and can now log in.</p>
             <p style="color: #666;">A confirmation email has been sent to the user.</p>
           </div>
@@ -184,7 +184,7 @@ const verifyUser = async (req, res) => {
     res.status(500).send(`
       <html>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-          <h2 style="color: #e74c3c;">❌ Server Error</h2>
+          <h2 style="color: #e74c3c;">Server Error</h2>
           <p>Failed to verify user. Please try again later.</p>
         </body>
       </html>

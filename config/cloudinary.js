@@ -16,10 +16,10 @@ console.log('API Secret:', process.env.CLOUD_API_SECRET ? 'SET' : 'NOT SET');
 // Test Cloudinary connection
 cloudinary.api.ping()
     .then((result) => {
-        console.log('✅ Cloudinary connection successful:', result);
+        console.log('Cloudinary connection successful:', result);
     })
     .catch((error) => {
-        console.error('❌ Cloudinary connection failed:', error);
+        console.error('Cloudinary connection failed:', error);
     });
 
 module.exports = cloudinary;
